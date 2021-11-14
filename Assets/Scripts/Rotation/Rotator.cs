@@ -1,28 +1,38 @@
-﻿using UnityEngine;
+using UnityEngine;
+using System;
 using System.Collections.Generic;
 using System.Collections;
-using System;
 /// <summary>
-/// Рассчитывает, на сколько вращать объект
+/// ������������, �� ������� ������� ������
 /// </summary>
 public class Rotator : MonoBehaviour
 {
-    /// <summary>
-    /// Событие смены угла
-    /// </summary>
-    public event Action<float> OnChangeDegree;
-    /// <summary>
-    /// Значение, при котором работает вращение
-    /// </summary>
-    public bool DoPerformScenario = true;
+    public Vector2 CircleVector => _circleVector;
+    private Vector2 _circleVector = new Vector2(0, 1);
+
+    public event Action<float> OnChangeDegree = delegate { };
 
     [SerializeField] private ScenarioObject scenarioSO;
     [SerializeField] private bool beginOnStart = false;
-    [SerializeField] protected float timeStep = 0.1f;
+    [SerializeField] private float timeStep = 0.1f;
 
-    protected List<Scenario> scenario;
+    private Coroutine coroutineTimer;
+    private List<Scenario> scenario;
     private CoroutineHandle scenarioCoroutine;
-    /// TODO: парсить из xml?
+
+    [SerializeField] private bool doScenario = true;
+
+    /// TODO: ������� �� xml?
+    public void Init(ScenarioObject scenarioSO)
+    {
+        scenario = new List<Scenario>();
+        foreach (Scenario scenarioStep in scenarioSO.ScenarioSO)
+        {
+            scenario.Add(scenarioStep);
+        }
+
+        scenarioCoroutine = this.RunCoroutine(PerformScenario(scenario));
+    }
 
     private void Start()
     {
@@ -31,9 +41,9 @@ public class Rotator : MonoBehaviour
             scenarioCoroutine = this.RunCoroutine(PerformScenario(scenarioSO));
         }
     }
-    protected virtual IEnumerator PerformScenario(List<Scenario> scenario)
+    private IEnumerator PerformScenario(List<Scenario> scenario)
     {
-        while (DoPerformScenario)
+        while (doScenario)
         {
             foreach (Scenario scenarioStep in scenario)
             {
@@ -42,16 +52,15 @@ public class Rotator : MonoBehaviour
         }
     }
 
-    protected virtual IEnumerator PerformScenario(ScenarioObject scenario)
+    private IEnumerator PerformScenario(ScenarioObject scenario)
     {
-        while (DoPerformScenario)
+        while (doScenario)
         {
             foreach (Scenario scenarioStep in scenario.ScenarioSO)
             {
                 yield return DoScenarioStep(scenarioStep);
             }
         }
-        scenarioCoroutine = null;
     }
 
     private IEnumerator DoScenarioStep(Scenario scenarioStep)
@@ -60,7 +69,7 @@ public class Rotator : MonoBehaviour
         float speed = scenarioStep.acelerationTime == 0 ? scenarioStep.speed : 0;
         float degree = 0;
         float aceleration = scenarioStep.acelerationTime == 0 ? 0 : scenarioStep.speed / scenarioStep.acelerationTime;
-        int direction = (scenarioStep.isClockwise ? -1 : 1);
+        int direction = (scenarioStep.isClockwise ? 1 : -1);
         while (time < scenarioStep.time)
         {
             yield return new WaitForSeconds(timeStep);
@@ -77,11 +86,11 @@ public class Rotator : MonoBehaviour
         {
             if (time < scenarioStep.acelerationTime)
             {
-                speed += (aceleration * timeStep);
+                speed += direction * (aceleration * timeStep);
             }
             else if (time > scenarioStep.time - scenarioStep.acelerationTime)
             {
-                speed -= (aceleration * timeStep);
+                speed -= direction * (aceleration * timeStep);
             }
         }
         return direction * speed * timeStep;
