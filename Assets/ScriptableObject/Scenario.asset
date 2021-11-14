@@ -14,6 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   scenario:
   - time: 10
+    acelerationTime: 3
+    isClockwise: 1
+    speed: 500
+  - time: 5
+    acelerationTime: 0
+    isClockwise: 1
+    speed: 60
+  - time: 5
     acelerationTime: 0
     isClockwise: 0
-    speed: 160
+    speed: 60
