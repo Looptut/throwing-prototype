@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
-
+/// <summary>
+/// Описание характеристик пула
+/// </summary>
 [System.Serializable]
 public class PoolPrefs
 {

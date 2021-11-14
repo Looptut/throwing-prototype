@@ -1,30 +1,32 @@
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-
+/// <summary>
+/// Базовый пул
+/// </summary>
 public class ObjectPool : MonoBehaviour
 {
     [SerializeField] protected PoolPrefs prefs;
-    private Queue<GameObject> pool;
+    protected Queue<GameObject> pool;
     private GameObject concreteObject;
-    private GameObject parentPool;
-    private ISpawner spawner;
+    protected GameObject parentPool;
+    protected ISpawner spawner;
 
-    private void Start()
+    private void Awake()
     {
         spawner = new Spawner();
-        CreatePool();
+        pool = CreatePool(out parentPool);
+        AddObjectsToPool(parentPool.transform, pool);
     }
 
-    private void CreatePool()
+    protected virtual Queue<GameObject> CreatePool(out GameObject parentPool)
     {
-        pool = new Queue<GameObject>();
+        var pool = new Queue<GameObject>();
         parentPool = new GameObject(prefs.name);
         parentPool.transform.SetParent(transform, true);
-        AddObjectsToPool(parentPool.transform);
+        return pool;
     }
 
-    private void AddObjectsToPool(Transform parent)
+    protected virtual void AddObjectsToPool(Transform parent, Queue<GameObject> pool)
     {
         for (int i = 0; i < prefs.objectsCount; i++)
         {
@@ -36,14 +38,29 @@ public class ObjectPool : MonoBehaviour
         }
     }
     /// <summary>
-    /// ������ ������ �� ����
+    /// Вернет объект из пула
     /// </summary>
     /// <returns></returns>
     public GameObject GetNextFromPool()
     {
-        GameObject nextObject = pool.Dequeue();
-        nextObject.gameObject.SetActive(true);
-        pool.Enqueue(nextObject);
-        return nextObject;
+        if (pool.Count != 0)
+        {
+            GameObject nextObject = pool.Dequeue();
+            nextObject.gameObject.SetActive(true);
+            return nextObject;
+        }
+        else
+        {
+            return null;
+        }
+    }
+    /// <summary>
+    /// Вернуть GameObject в пул
+    /// </summary>
+    /// <param name="returnedObject"></param>
+    public void ReturnToPool(GameObject returnedObject)
+    {
+        pool.Enqueue(returnedObject);
+        returnedObject.SetActive(false);
     }
 }
